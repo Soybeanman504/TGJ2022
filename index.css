@@ -1,0 +1,24 @@
+body {
+  font-family: MaruMonica;
+}
+
+body div {
+  text-align: center;
+  margin: auto;
+  max-width: 640;
+}
+
+body div h1 {
+  margin: 20px;
+}
+
+#app canvas {
+  display: block;
+  image-rendering: pixelated;
+  width: 640px;
+}
+
+@font-face {
+  font-family: 'MaruMonica';
+  src: url(./font/MaruMonica.ttf);
+}
