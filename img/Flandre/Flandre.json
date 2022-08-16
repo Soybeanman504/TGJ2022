@@ -1,5 +1,5 @@
 { "frames": {
-   "Cirno.aseprite": {
+   "Flandre.aseprite": {
     "frame": { "x": 0, "y": 0, "w": 32, "h": 32 },
     "rotated": false,
     "trimmed": false,
@@ -11,7 +11,7 @@
  "meta": {
   "app": "https://www.aseprite.org/",
   "version": "1.2.39-x64",
-  "image": "Cirno.png",
+  "image": "Flandre.png",
   "format": "I8",
   "size": { "w": 32, "h": 32 },
   "scale": "1",
