@@ -1,1 +1,1 @@
-body{font-family:MaruMonica}body div{text-align:center;margin:auto;max-width:640}body div h1{margin:20px}#app canvas{display:block;image-rendering:pixelated;width:640px}@font-face{font-family:'MaruMonica';src:url(./font/MaruMonica.ttf)}
+body{font-family:MaruMonica;margin:0;overflow:hidden;user-select:none}body #main{text-align:center;margin:auto}body #main div h1{margin:20px}#app canvas{display:block;image-rendering:pixelated;margin:auto;height:120vmin;max-height:90vh}@font-face{font-family:'MaruMonica';src:url(./font/MaruMonica.ttf)}

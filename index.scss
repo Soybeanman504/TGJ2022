@@ -1,13 +1,17 @@
 body {
     font-family: MaruMonica;
+    margin: 0;
+    overflow: hidden;
+    user-select: none;
 
-    div {
+    #main {
         text-align: center;
         margin: auto;
-        max-width: 640;
-        
-        h1 {
-            margin: 20px;
+
+        div {
+            h1 {
+                margin: 20px;
+            }
         }
     }
 }
@@ -16,11 +20,13 @@ body {
     canvas {
         display: block;
         image-rendering: pixelated;
-        width: 640px;
+        margin: auto;
+        height: 120vmin;
+        max-height: 90vh;
     }
 }
 
 @font-face {
-	font-family: 'MaruMonica';
-	src: url(./font/MaruMonica.ttf);
+    font-family: 'MaruMonica';
+    src: url(./font/MaruMonica.ttf);
 }

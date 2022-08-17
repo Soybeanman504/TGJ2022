@@ -12,7 +12,7 @@ class Table {
         this.cont = new PIXI.Container();
 
         this.cont.x = this.app.screen.width / 2;
-        this.cont.y = 224;
+        this.cont.y = this.app.screen.height / 2;
 
         this.cont.mask = new PIXI.Graphics()
             .beginFill(0xffffff)

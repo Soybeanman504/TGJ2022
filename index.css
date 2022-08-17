@@ -1,21 +1,25 @@
 body {
   font-family: MaruMonica;
+  margin: 0;
+  overflow: hidden;
+  user-select: none;
 }
 
-body div {
+body #main {
   text-align: center;
   margin: auto;
-  max-width: 640;
 }
 
-body div h1 {
+body #main div h1 {
   margin: 20px;
 }
 
 #app canvas {
   display: block;
   image-rendering: pixelated;
-  width: 640px;
+  margin: auto;
+  height: 120vmin;
+  max-height: 90vh;
 }
 
 @font-face {
