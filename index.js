@@ -9,7 +9,12 @@ class main {
     constructor() {
 
         this.charaNames = ['Reimu', 'Marisa', 'Rumia', 'Cirno', 'Meirin', 'Patchouli', 'Sakuya', 'Remilia', 'Flandre'];
-        this.imgNames = this.charaNames;
+        this.backImgNames = ['Washitsu'];
+        this.iconNames = ['P', 'Iconten'];
+        this.textNames = ['_1','_2','_3', 'Start', 'Restart'];
+        this.imgNames = this.charaNames.concat(this.backImgNames, this.iconNames);//, this.textNames);
+        console.log(this.imgNames);
+
         this.app = new ExApp($('#app'), this.imgNames, {
             width: 256,
             height: 352,

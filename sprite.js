@@ -15,6 +15,7 @@ class ExApp extends PIXI.Application {
     setImg() {
 
         this.imgNames.forEach(imgName => {
+            console.log(typeof imgName);
             this.loader.add(imgName, './img/' + imgName + '/' + imgName + '.json');
         });
 

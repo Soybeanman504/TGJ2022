@@ -11,13 +11,29 @@ class Table {
 
         this.chain = [];//ゆっくりの連なり。座標を順に格納。
 
+        this.score = 0;//点数
+        this.reiryoku = 0;//霊力
+        this.comboScore = 0;//途中の点数
+        this.comboReiryoku = 0;//途中の霊力
+        this.combo = [];//[{消した種類,個数}]
+        this.comboTime = 2 * 60;//持続するframe数
+
+        //このクラスのものは全てここへ
         this.tableCont = new PIXI.Container();
 
+        this.app.stage.addChild(this.tableCont);
+
+        //背景
+        this.backImg = new ExSprite(this.app, 'Washitsu');
+        this.tableCont.addChild(this.backImg);
+
+        //盤面
         this.mapCont = new PIXI.Container();
 
         this.mapCont.x = this.app.screen.width / 2;
         this.mapCont.y = this.app.screen.height / 2;
 
+        //当たり判定
         this.mapCont.mask = new PIXI.Graphics()
             .beginFill(0xffffff)
             .drawRect(this.mapCont.x - this.w / 2, this.mapCont.y - this.h / 2, this.w, this.h)
@@ -31,8 +47,9 @@ class Table {
         this.mapCont.on('pointerup', (e) => { this.pointerUpEvent(e) });
         this.mapCont.on('pointerout', (e) => { this.pointerUpEvent(e) });
 
-        this.app.stage.addChild(this.tableCont);
         this.tableCont.addChild(this.mapCont);
+
+        //Chara関連
 
         this.fallCharas = Array(this.mw);
         this.fallCharasN = Array(this.mw);
