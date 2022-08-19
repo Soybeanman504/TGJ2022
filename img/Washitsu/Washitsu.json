@@ -1,19 +1,19 @@
 { "frames": {
-   "P.aseprite": {
-    "frame": { "x": 0, "y": 0, "w": 16, "h": 16 },
+   "Washitsu.aseprite": {
+    "frame": { "x": 0, "y": 0, "w": 256, "h": 352 },
     "rotated": false,
     "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 16 },
-    "sourceSize": { "w": 16, "h": 16 },
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 256, "h": 352 },
+    "sourceSize": { "w": 256, "h": 352 },
     "duration": 100
    }
  },
  "meta": {
   "app": "https://www.aseprite.org/",
   "version": "1.2.39-x64",
-  "image": "P.png",
+  "image": "Washitsu.png",
   "format": "I8",
-  "size": { "w": 16, "h": 16 },
+  "size": { "w": 256, "h": 352 },
   "scale": "1",
   "frameTags": [
   ],
