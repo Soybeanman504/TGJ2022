@@ -15,7 +15,6 @@ class ExApp extends PIXI.Application {
     setImg() {
 
         this.imgNames.forEach(imgName => {
-            console.log(typeof imgName);
             this.loader.add(imgName, './img/' + imgName + '/' + imgName + '.json');
         });
 
@@ -39,6 +38,7 @@ class ExApp extends PIXI.Application {
                 }
             });
         });
+        
         $.ajaxSetup({ async: true });
 
     }
@@ -46,8 +46,10 @@ class ExApp extends PIXI.Application {
 
 class ExSprite extends PIXI.AnimatedSprite {
     constructor(app, imgName) {
+        console.log(imgName);
         super(app.textureArray[imgName]);
 
+        this.anchor.set(0.5);
         this.app = app;
         this.animationSpeed = app.textureArraySpeed[imgName];
         this.play();
