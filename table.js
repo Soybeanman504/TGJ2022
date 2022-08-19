@@ -36,46 +36,77 @@ class Table {
 
         this.fallCharas = Array(this.mw);
         this.fallCharasN = Array(this.mw);
-        this.map = new Array(mw);
+        this.map = new Array(this.mw);
 
         for (let mx = 0; mx < this.mw; ++mx) {
-            this.fallCharas[mx] = new Array(mh);
+            this.fallCharas[mx] = new Array(this.mh + 1);
             this.fallCharasN[mx] = 0;
-            this.map[mx] = new Array(mh);
+            this.map[mx] = new Array(this.mh);
 
             for (let my = 0; my < this.mh; ++my) {
-                this.fallCharas[mx][my] = { value: -1 };
-                this.setChara(mx, my, randInt(charaNames.length));
+                this.fallCharas[mx][my] = -1;
+                this.setChara(mx, my, randInt(this.charaNames.length));
             }
+
+            this.fallCharas[mx][this.mh] = -1;
         }
 
-        //this.app.ticker.add((delta) => { this.mainLoop(delta) });
+        this.app.ticker.add((delta) => { this.mainLoop(delta) });
     }
 
     //mainLoop
 
     mainLoop(delta) {
         //fallCharas送り出し
+
         for (let mx = 0; mx < this.mw; ++mx) {
             if (this.map[mx][0].value == -1) {
-                this.setChara(mx, 0, this.fallCharas[mx][0].value);
+                console.log(mx, this.fallCharas[mx]);
+                this.setChara(mx, 0, this.fallCharas[mx][0]);
                 this.map[mx][0].fall = true;
-                this.map[mx][0].sprite.x -= 32;
+                this.map[mx][0].sprite.y -= 32;
+
+                for (let my = 0; my < this.mh; ++my) {
+                    this.fallCharas[mx][my] = this.fallCharas[mx][my + 1];
+                }
+
+                this.fallCharasN[mx] -= 1;
             }
 
             for (let my = this.mh - 1; my > -1; --my) {
-                this.map[mx][my].sprite.mv += 1;
-                let newY = this.map[mx][my].sprite.y + this.map[mx][my].sprite.mv;
-                
-                if (newY > this.myToY(mx, my)) {
-                    if (my == this.mh - 1 || !this.map[mx][my + 1].fall) {
-                        this.map[mx][my].sprite.y = Table.myToY(mx, my);
-                        this.map[mx][my].sprite.fall = false;
-                    } else if (newY > this.myToY(mx, my) + 16) {
-                        //todo myからmy+1にスプライト、fallフラグ、valueなどを移動する。
+                if (this.map[mx][my].fall) {
+                    this.map[mx][my].mv += 1;
+                    let newY = this.map[mx][my].sprite.y + this.map[mx][my].mv;
+
+                    if (newY > this.myToY(mx, my)) {
+                        if (newY > this.myToY(mx, my) + 16) {
+
+                            this.map[mx][my + 1].value = this.map[mx][my].value;
+                            this.map[mx][my + 1].select = this.map[mx][my].select;
+                            this.map[mx][my + 1].fall = true;
+                            this.map[mx][my + 1].mv = this.map[mx][my].mv;
+                            this.map[mx][my + 1].sprite = Object.create(this.map[mx][my].sprite);
+                            
+                            this.mapCont.removeChild(this.map[mx][my].sprite);
+                            this.mapCont.addChild(this.map[mx][my + 1].sprite);
+
+                            this.deleteMap({ x: mx, y: my });
+
+                        }
+
+                        if (my == this.mh - 1 ||
+                            (!this.map[mx][my + 1].fall && this.map[mx][my + 1].value != -1)) {
+
+                            this.map[mx][my].sprite.y = this.myToY(mx, my);
+                            this.map[mx][my].fall = false;
+                            this.map[mx][my].mv = 0;
+
+                        }
                     }
-                } else {
-                    this.map[mx][my].sprite.y = newY;
+
+                    if (this.map[mx][my].fall) {
+                        this.map[mx][my].sprite.y = newY;
+                    }
                 }
             }
         }
@@ -91,7 +122,6 @@ class Table {
             [pointerMp, success] = this.positionToMp(p);
 
             if (success) {
-                console.log('move');
                 this.mapEvent(pointerMp);
             }
         }
@@ -120,18 +150,15 @@ class Table {
     }
 
     pointerDownEvent(e) {
-        console.log('down', this.chain);
         this.pointer = true;
 
         this.pointerMoveEvent(e);
     }
 
     pointerUpEvent(e) {
-        console.log('up', this.chain);
         this.pointer = false;
 
         if (this.chain.length > 0) {
-            console.log(this.chain);
             this.deleteCharas(this.chain);
             this.chain = [];
         }
@@ -144,6 +171,7 @@ class Table {
 
         mps.forEach((mp) => {
             this.deleteChara(mp);
+            this.addFallChara(mp.x, randInt(this.charaNames.length));
 
             if (fallMxs.indexOf(mp.x) == -1) {
                 fallMxs.push(mp.x);
@@ -154,27 +182,37 @@ class Table {
             let depth = 0;
 
             for (let my = this.mh - 1; my > -1; --my) {
-                if (this.map[mx][my] == -1) {
+                if (this.map[mx][my].value == -1) {
                     depth += 1;
                 } else {
                     if (depth > 0) {
-                        this.map[mx][my].fall = true;
+                        this.setFallChara(mx, my);
                     }
                 }
             }
         });
     }
 
-    addFallCharas(mx, value) {
-        this.fallCharas[mx][this.fallCharas[mx]++].value = value;
+    addFallChara(mx, value) {
+        this.fallCharas[mx][this.fallCharasN[mx]++] = value;
     }
 
     deleteChara(mp) {
-        this.setMap(mp, 'false', -1);
-        this.setMap(mp, 'select', false);
-
+        console.log(this.map[mp.x][mp.y].sprite);
         this.mapCont.removeChild(this.map[mp.x][mp.y].sprite);
+        this.deleteMap(mp);
+    }
+
+    deleteMap(mp) {
+        this.setMap(mp, 'value', -1);
+        this.setMap(mp, 'select', false);
+        this.setMap(mp, 'fall', false);
+        this.setMap(mp, 'mv', -4);
         this.setMap(mp, 'sprite', null);
+    }
+
+    setFallChara(mx, my) {
+        this.map[mx][my].fall = true;
     }
 
     setChara(mx, my, value) {
@@ -182,7 +220,7 @@ class Table {
         this.map[mx][my].value = value;
         this.map[mx][my].select = false;
         this.map[mx][my].fall = false;
-        this.map[mx][my].mv = 0;//速度
+        this.map[mx][my].mv = -4;//速度
 
         this.map[mx][my].sprite = new ExSprite(this.app, this.charaNames[this.map[mx][my].value]);
 
