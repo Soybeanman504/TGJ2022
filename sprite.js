@@ -3,11 +3,21 @@ class ExApp extends PIXI.Application {
 
         super(dic);
 
+        this.tableCont = new PIXI.Container();
+
+        this.tableCont.x = this.screen.width / 2;
+        this.tableCont.y = this.screen.height / 2;
+        this.stage.addChild(this.tableCont);
+
         this.imgNames = imgNames;
         this.textureArray = {};
         this.textureArraySpeed = {};
 
         this.setImg();
+        this.setText();
+        
+        this.loader.load(() => { this.setTexture() });
+
         elm.append(this.view);
 
     }
@@ -17,8 +27,6 @@ class ExApp extends PIXI.Application {
         this.imgNames.forEach(imgName => {
             this.loader.add(imgName, './img/' + imgName + '/' + imgName + '.json');
         });
-
-        this.loader.load(() => { this.setTexture() });
 
     }
 
@@ -42,11 +50,14 @@ class ExApp extends PIXI.Application {
         $.ajaxSetup({ async: true });
 
     }
+
+    setText() {
+        this.loader.add('MaruMonica', './font/MaruMonica.ttf');
+    }
 }
 
 class ExSprite extends PIXI.AnimatedSprite {
     constructor(app, imgName) {
-        console.log(imgName);
         super(app.textureArray[imgName]);
 
         this.anchor.set(0.5);

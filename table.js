@@ -1,48 +1,59 @@
 class Table {
-    //キャラが消失するバグがあるが続行できるので無視。
+    //キャラが重なるバグがあるが続行できるので無視。
 
-    constructor(app, mw, mh, charaNames, useCharaNames, charaScoreRatios) {
+    constructor(app, mw, mh, charaNames, useCharaNs, charaScoreRatios) {
+
         this.app = app;
         this.mw = mw;
         this.mh = mh;
         this.w = mw * 32;
         this.h = mh * 32 + 16;
         this.charaNames = charaNames;
-        this.useCharaNames = useCharaNames;
+        this.useCharaNs = useCharaNs;
         this.pointer = false;
 
+        
         //Const
+
+        this.firstTime = 100;
         this.firstMv = -4;
         this.margin = 20;
-        this.scoreCoef = 10;
-        this.reiryokuCoef = 1 / 100;
-        this.comboTime = 2 * this.app.ticker.FPS;//コンボが持続するframe数
+        this.scoreCoef = 1000;
+        this.reiryokuCoef = 1 / 30;
+        this.fps = this.app.ticker.FPS;
+        this.comboTime = 2 * this.fps;//コンボが持続するframe数
 
         this.chain = [];//ゆっくりの連なり。座標を順に格納。
+        this.countDownFrame = 0;
         this.frame = 0;
 
-        this.charaScoreRatios = charaScoreRatios;
-        Object.keys(this.charaScoreRatios).forEach((charaName) => {
-            this.charaScoreRatios[charaName] /= 10;
-        });
-
+        this.cowntDownTime = 3;
+        this.time = this.firstTime;
         this.score = 0;//点数
         this.reiryoku = 0;//霊力(-にもなる)
         this.point = 0;//まとめたやつ
         //comboSocre = n1 * 1 + n2 * 2 + ...
         this.resetCombo();//消した種類の比,個数の加重和と総数など
 
-        //このクラスのものは全てここへ
-        this.tableCont = new PIXI.Container();
+        this.charaScoreRatios = charaScoreRatios;
+        Object.keys(this.charaScoreRatios).forEach((charaName) => {
+            this.charaScoreRatios[charaName] /= 10;
+        });
 
-        this.tableCont.x = this.app.screen.width / 2;
-        this.tableCont.y = this.app.screen.height / 2;
+        this.setSprite();
+        this.startAll();
+    }
 
-        this.app.stage.addChild(this.tableCont);
+    setSprite() {
 
-        //背景
-        this.backImg = new ExSprite(this.app, 'Washitsu');
-        this.tableCont.addChild(this.backImg);
+        //カウントダウン
+        this.countDownNumber = Array(4);
+
+        this.countDownNumber[0] = new ExSprite(this.app, 'Start');
+
+        for (let i = 1; i < 4; ++i) {
+            this.countDownNumber[i] = new ExSprite(this.app, '_' + i);
+        }
 
         //アイコン        
         this.iconTen = new ExSprite(this.app, 'Iconten');
@@ -50,14 +61,110 @@ class Table {
         this.iconTen.x = 16;
         this.iconTen.y = -this.app.screen.height / 2 + 16;
 
-        this.tableCont.addChild(this.iconTen);
 
         this.iconP = new ExSprite(this.app, 'P');
 
         this.iconP.x = 16;
         this.iconP.y = -this.app.screen.height / 2 + 48;
 
-        this.tableCont.addChild(this.iconP);
+
+        //テキスト
+
+        this.textTime = new PIXI.Text(this.getTime(), {
+            fontSize: 32,
+            fill: 0xffffff,
+            stroke: 0x000000,
+            strokeThickness: 2
+        });
+        this.textTime.anchor.x = 0.5;
+
+        this.textTime.x = -this.app.screen.width / 4;
+        this.textTime.y = -152;
+
+        this.textTen = new PIXI.Text(this.getAllScore(), {
+            fontSize: 16,
+            fill: 0x000000,
+            stroke: 0x000000,
+            strokeThickness: 2
+        });
+        this.textTen.anchor.x = 1;
+
+        this.textTen.x = this.app.screen.width / 2;
+        this.textTen.y = -168;
+
+        this.textP = new PIXI.Text(this.getAllReiryoku(), {
+            fontSize: 16,
+            fill: 0x000000,
+            stroke: 0x000000,
+            strokeThickness: 2
+        });
+        this.textP.anchor.x = 1;
+
+        this.textP.x = this.app.screen.width / 2;
+        this.textP.y = -136;
+
+        this.textCombo = new PIXI.Text(0, {
+            fontSize: 24,
+            fill: 0xfff000,
+            stroke: 0x777700,
+            strokeThickness: 2
+        });
+        this.textCombo.anchor.x = 1;
+
+        this.textCombo.x = this.app.screen.width / 2;
+        this.textCombo.y = 136;
+
+        //result画面
+        this.resultCont = new PIXI.Container();
+
+        this.kekka = new ExSprite(this.app, 'Result');
+        this.kekka.y = -64;
+
+        this.tweet = new ExSprite(this.app, 'Tweet');
+        this.tweet.x = -32;
+
+        this.twitter = new ExSprite(this.app, 'Twitter');
+        this.twitter.x = 64;
+
+        this.twitter.interactive = true;
+        this.twitter.on('pointerdown', () => { this.goTwitter() });
+
+        this.restart = new ExSprite(this.app, 'Restart');
+        this.restart.y = 64;
+
+        this.restart.interactive = true;
+        this.restart.on('pointerdown', () => { this.restartAll() });
+
+        this.mainLoopEvent = (delta) => { this.mainLoop(delta) };
+
+        this.countDownEvent = (delta) => { this.countDown(delta) };
+
+        this.app.tableCont.addChild(this.iconTen);
+        this.app.tableCont.addChild(this.iconP);
+
+        this.app.tableCont.addChild(this.textTime);
+        this.app.tableCont.addChild(this.textTen);
+        this.app.tableCont.addChild(this.textCombo);
+        this.app.tableCont.addChild(this.textP);
+        
+        this.resultCont.addChild(this.kekka);
+        this.resultCont.addChild(this.tweet);
+        this.resultCont.addChild(this.twitter);
+        this.resultCont.addChild(this.restart);
+    }
+
+    startAll() {
+        this.chain = [];//ゆっくりの連なり。座標を順に格納。
+        this.countDownFrame = 0;
+        this.frame = 0;
+
+        this.cowntDownTime = 3;
+        this.time = this.firstTime;
+        this.score = 0;//点数
+        this.reiryoku = 0;//霊力(-にもなる)
+        this.point = 0;//まとめたやつ
+        //comboSocre = n1 * 1 + n2 * 2 + ...
+        this.resetCombo();//消した種類の比,個数の加重和と総数など
 
         //盤面
         this.mapCont = new PIXI.Container();
@@ -65,19 +172,14 @@ class Table {
         //クリッピング
         this.mapCont.mask = new PIXI.Graphics()
             .beginFill(0xffffff)
-            .drawRect(this.tableCont.x - this.w / 2, this.tableCont.y - this.h / 2, this.w, this.h)
+            .drawRect(this.app.tableCont.x - this.w / 2, this.app.tableCont.y - this.h / 2, this.w, this.h)
             .endFill();
 
         this.mapCont.interactive = true;
         this.mapCont.hitArea = new PIXI.Rectangle(-this.w / 2 - this.margin, -this.h / 2 - this.margin, this.w + this.margin * 2, this.h + this.margin * 2);
 
-        this.mapCont.on('pointermove', (e) => { this.pointerMoveEvent(e) });
-        this.mapCont.on('pointerdown', (e) => { this.pointerDownEvent(e) });
-        this.mapCont.on('pointerup', (e) => { this.pointerUpEvent(e) });
-        this.mapCont.on('pointerout', (e) => { this.pointerUpEvent(e) });
-
-        this.tableCont.addChild(this.mapCont);
-
+        this.app.tableCont.addChild(this.mapCont);
+        
         //Chara関連
 
         this.fallingCharas = Array(this.mw);
@@ -91,22 +193,86 @@ class Table {
 
             for (let my = 0; my < this.mh; ++my) {
                 this.fallingCharas[mx][my] = -1;
-                this.setChara(mx, my, randInt(this.useCharaNames.length));
+                this.setChara(mx, my, this.useCharaNs[randInt(this.useCharaNs.length)]);
             }
 
             this.fallingCharas[mx][this.mh] = -1;
         }
 
-        this.app.ticker.add((delta) => { this.mainLoop(delta) });
+        this.displayTime();
+        this.displayScoreAndCombo();
 
+        this.app.tableCont.addChild(this.countDownNumber[3]);
+
+        this.app.ticker.add(this.countDownEvent);
+    }
+
+    restartAll() {
+        this.app.tableCont.removeChild(this.mapCont);
+        this.app.tableCont.removeChild(this.resultCont);
+        this.mapCont.destroy();
+        this.startAll();
+    }
+
+    //countDown
+
+    countDown(delta) {
+        this.countDownFrame += delta;
+        let newTime = 3 - Math.floor(this.countDownFrame / this.fps);
+
+        if (newTime < 0) {
+            this.app.tableCont.removeChild(this.countDownNumber[this.cowntDownTime]);
+            this.app.ticker.remove(this.countDownEvent);
+            this.start();
+        } else if (newTime < this.cowntDownTime) {
+            this.app.tableCont.removeChild(this.countDownNumber[this.cowntDownTime]);
+            this.cowntDownTime = newTime;
+            this.app.tableCont.addChild(this.countDownNumber[this.cowntDownTime]);
+        }
+    }
+
+    //start
+
+    start() {
+        this.app.ticker.add(this.mainLoopEvent);
+        this.mapCont.on('pointermove', (e) => { this.pointerMoveEvent(e) });
+        this.mapCont.on('pointerdown', (e) => { this.pointerDownEvent(e) });
+        this.mapCont.on('pointerup', (e) => { this.pointerUpEvent(e) });
+        this.mapCont.on('pointerout', (e) => { this.pointerUpEvent(e) });
     }
 
     //mainLoop
 
     mainLoop(delta) {
-        this.frame += delta;
+        this.frame += Math.max(delta,1);
         this.fallCharas();
-        //console.log(this.frame, this.app.ticker.speed);
+
+        if (this.getTime() < this.time) {
+            this.time = this.getTime();
+            this.displayTime();
+
+            if (this.time < 1) {
+                this.app.ticker.remove(this.mainLoopEvent);
+                this.mapCont.removeAllListeners();
+                this.result();
+            }
+        }
+    }
+
+    //end
+
+    //result
+
+    result() {
+        this.app.tableCont.addChild(this.resultCont);
+    }
+
+    //Twitter
+
+    goTwitter() {
+        let text = 'スコア' + this.getAllScore() + '点を記録しました！%0A%23ゆっくりできない100秒間%0A%23東方ゲームジャム';
+        let url = 'https://twitter.com/intent/tweet?text=' + text + '%0Ahttps://soybeanman504.github.io/TGJ2022/';
+        window.open(url, '_blank', 'noreferrer');
     }
 
     //fallingCharas送り出し
@@ -114,7 +280,6 @@ class Table {
     fallCharas() {
         for (let mx = 0; mx < this.mw; ++mx) {
             if (this.map[mx][0].value == -1) {
-                console.log(mx, this.fallingCharas[mx]);
                 this.setChara(mx, 0, this.fallingCharas[mx][0]);
                 this.map[mx][0].fall = true;
                 this.map[mx][0].sprite.y -= 32;
@@ -186,12 +351,17 @@ class Table {
         this.combo.score = this.combo.point * scoreRatio * this.scoreCoef;
         this.combo.reiryoku = this.combo.point * (1 - scoreRatio) * this.reiryokuCoef;
 
-        if (this.frame - this.combo.frame > this.comboTime) {
+        if (this.combo.n > 1 && (this.frame - this.combo.frame) > this.comboTime) {
             this.score = this.getAllScore();
             this.reiryoku = this.getAllReiryoku();
 
             this.resetCombo();
+        } else {
+            this.combo.frame = this.frame;
         };
+        console.log(scoreRatio, this.combo, this.charaScoreRatios);
+
+        this.displayScoreAndCombo();
     }
 
     //Events
@@ -269,10 +439,10 @@ class Table {
         this.combo.point += mps.length * this.combo.n;
 
         mps.forEach((mp) => {
-            this.combo.ratio.sum += [this.getMap(mp).value];
+            this.combo.ratio.sum += this.charaScoreRatios[this.charaNames[this.getMap(mp).value]];
             this.combo.ratio.n += 1;
             this.deleteChara(mp);
-            this.addFallChara(mp.x, randInt(this.useCharaNames.length));
+            this.addFallChara(mp.x, this.useCharaNs[randInt(this.useCharaNs.length)]);
 
             if (fallMxs.indexOf(mp.x) == -1) {
                 fallMxs.push(mp.x);
@@ -292,6 +462,8 @@ class Table {
                 }
             }
         });
+
+        this.reflectCombo();
     }
 
     addFallChara(mx, value) {
@@ -299,7 +471,6 @@ class Table {
     }
 
     deleteChara(mp) {
-        console.log(this.map[mp.x][mp.y].sprite);
         this.mapCont.removeChild(this.map[mp.x][mp.y].sprite);
         this.deleteMap(mp);
     }
@@ -334,7 +505,7 @@ class Table {
         this.map[mx][my] = {};
         this.deleteMap({ x: mx, y: my });
         this.map[mx][my].value = value;
-        this.map[mx][my].sprite = new ExSprite(this.app, this.useCharaNames[this.map[mx][my].value]);
+        this.map[mx][my].sprite = new ExSprite(this.app, this.charaNames[this.map[mx][my].value]);
 
         this.moveSprite(this.map[mx][my].sprite, this.mxToX(mx), this.myToY(mx, my));
 
@@ -386,6 +557,20 @@ class Table {
 
     getAllReiryoku() {
         return this.reiryoku + this.combo.reiryoku;
+    }
+
+    displayScoreAndCombo() {
+        this.textTen.text = Math.floor(this.getAllScore());
+        this.textP.text = Math.floor(this.getAllReiryoku() * 100) / 100;
+        this.textCombo.text = this.combo.n;
+    }
+
+    getTime() {
+        return this.firstTime - Math.floor(this.frame / this.fps);
+    }
+
+    displayTime() {
+        this.textTime.text = this.time;
     }
 
     static matchMp(mp1, mp2) {
