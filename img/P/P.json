@@ -1,10 +1,10 @@
 { "frames": {
    "P.aseprite": {
-    "frame": { "x": 0, "y": 0, "w": 16, "h": 16 },
+    "frame": { "x": 0, "y": 0, "w": 32, "h": 32 },
     "rotated": false,
     "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 16 },
-    "sourceSize": { "w": 16, "h": 16 },
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
     "duration": 100
    }
  },
@@ -13,7 +13,7 @@
   "version": "1.2.39-x64",
   "image": "P.png",
   "format": "I8",
-  "size": { "w": 16, "h": 16 },
+  "size": { "w": 32, "h": 32 },
   "scale": "1",
   "frameTags": [
   ],
