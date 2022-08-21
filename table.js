@@ -12,14 +12,14 @@ class Table {
         this.useCharaNs = useCharaNs;
         this.pointer = false;
 
-        
+
         //Const
 
         this.firstTime = 100;
         this.firstMv = -4;
         this.margin = 20;
         this.scoreCoef = 1000;
-        this.reiryokuCoef = 1 / 30;
+        this.reiryokuCoef = 1 / 150;
         this.fps = this.app.ticker.FPS;
         this.comboTime = 2 * this.fps;//コンボが持続するframe数
 
@@ -34,6 +34,8 @@ class Table {
         this.point = 0;//まとめたやつ
         //comboSocre = n1 * 1 + n2 * 2 + ...
         this.resetCombo();//消した種類の比,個数の加重和と総数など
+        this.spellFrames = [];
+
 
         this.charaScoreRatios = charaScoreRatios;
         Object.keys(this.charaScoreRatios).forEach((charaName) => {
@@ -52,7 +54,7 @@ class Table {
         this.countDownNumber[0] = new ExSprite(this.app, 'Start');
 
         for (let i = 1; i < 4; ++i) {
-            this.countDownNumber[i] = new ExSprite(this.app, '_' + i);
+            this.countDownNumber[i] = new ExSprite(this.app, 'Number' + i);
         }
 
         //アイコン        
@@ -114,11 +116,21 @@ class Table {
         this.textCombo.x = this.app.screen.width / 2;
         this.textCombo.y = 136;
 
+        this.spellcard = new ExSprite(this.app, 'Spellcard');
+        this.spellcard.y = 136;
+        this.spellcard.tint = 0xffffff;
+        this.spellcard.alpha = 0.5;
+
+        this.spellcard.interactive = true;
+        this.spellcard.on('pointerdown', () => { this.spellcard() });
+
         //result画面
         this.resultCont = new PIXI.Container();
 
         this.kekka = new ExSprite(this.app, 'Result');
         this.kekka.y = -64;
+
+        this.tweetCont = new PIXI.Container();
 
         this.tweet = new ExSprite(this.app, 'Tweet');
         this.tweet.x = -32;
@@ -144,13 +156,13 @@ class Table {
 
         this.app.tableCont.addChild(this.textTime);
         this.app.tableCont.addChild(this.textTen);
-        this.app.tableCont.addChild(this.textCombo);
         this.app.tableCont.addChild(this.textP);
-        
+        this.app.tableCont.addChild(this.textCombo);
+        this.app.tableCont.addChild(this.spellcard);
+
         this.resultCont.addChild(this.kekka);
-        this.resultCont.addChild(this.tweet);
-        this.resultCont.addChild(this.twitter);
-        this.resultCont.addChild(this.restart);
+        this.tweetCont.addChild(this.tweet);
+        this.tweetCont.addChild(this.twitter);
     }
 
     startAll() {
@@ -163,6 +175,7 @@ class Table {
         this.score = 0;//点数
         this.reiryoku = 0;//霊力(-にもなる)
         this.point = 0;//まとめたやつ
+        this.spellFrames = [];
         //comboSocre = n1 * 1 + n2 * 2 + ...
         this.resetCombo();//消した種類の比,個数の加重和と総数など
 
@@ -179,7 +192,7 @@ class Table {
         this.mapCont.hitArea = new PIXI.Rectangle(-this.w / 2 - this.margin, -this.h / 2 - this.margin, this.w + this.margin * 2, this.h + this.margin * 2);
 
         this.app.tableCont.addChild(this.mapCont);
-        
+
         //Chara関連
 
         this.fallingCharas = Array(this.mw);
@@ -209,6 +222,8 @@ class Table {
 
     restartAll() {
         this.app.tableCont.removeChild(this.mapCont);
+        this.resultCont.removeChild(this.restart);
+        this.resultCont.removeChild(this.tweetCont);
         this.app.tableCont.removeChild(this.resultCont);
         this.mapCont.destroy();
         this.startAll();
@@ -244,7 +259,7 @@ class Table {
     //mainLoop
 
     mainLoop(delta) {
-        this.frame += Math.max(delta,1);
+        this.frame += Math.max(delta, 1);
         this.fallCharas();
 
         if (this.getTime() < this.time) {
@@ -257,6 +272,35 @@ class Table {
                 this.result();
             }
         }
+
+        if (this.spellFrames.length > 0 && this.frame > this.spellFrames[0]) {
+            let size = 3 - this.spellFrames.length;
+            let centerMp = { x: randInt(this.mw - 2 * size) + size, y: randInt(this.mh - 2 * size) + size };
+            let mps = [];
+
+            for (let x = -size; x <= size; ++x) {
+                for (let y = -size; y <= size; ++y) {
+                    if ((centerMp.x + x) % 2) {//奇数のとき
+                        //todo
+                    }
+
+                    mps.push({ x: centerMp.x, y: centerMp.y + y });
+                }
+            }
+
+            this.spellFrames.pop();
+        }
+    }
+
+    spell() {
+        if (this.spellFrames.length == 0 && this.getAllReiryoku() >= 1) {
+            let mps = [{ x: randInt(this.mw), y: randInt(this.mh) }];
+            this.deleteCharas(mps);
+            this.spellFrames.push(this.frame + 1 * this.fps);
+            this.spellFrames.push(this.frame + 2 * this.fps);
+
+            this.reiryoku -= 1;
+        }
     }
 
     //end
@@ -265,6 +309,8 @@ class Table {
 
     result() {
         this.app.tableCont.addChild(this.resultCont);
+        setTimeout(() => { this.resultCont.addChild(this.tweetCont); }, 2000);
+        setTimeout(() => { this.resultCont.addChild(this.restart); }, 3000);
     }
 
     //Twitter
