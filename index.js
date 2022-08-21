@@ -51,10 +51,16 @@ class main {
         
         this.title = new ExSprite(this.app, 'Logo');
         this.title.y = -48;
-        this.titleCont.addChild(this.title);
-
+        
         this.start = new ExSprite(this.app, 'Start');
         this.start.y = 96;
+        this.start.interactive = true;
+        this.start.on('pointerdown',(e) => {
+            this.app.tableCont.removeChild(this.titleCont);
+            this.game();
+        });
+
+        this.titleCont.addChild(this.title);
         this.titleCont.addChild(this.start);
     }
 
