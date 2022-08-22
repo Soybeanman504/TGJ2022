@@ -15,15 +15,15 @@ class main {
         this.imgNames = this.charaNames.concat(this.backImgNames, this.iconNames, this.textNames);
 
         this.charaScoreRatios = {
-            Reimu: 5,
-            Marisa: 5,
-            Rumia: 5,
-            Cirno: 5,
+            Reimu: 6,
+            Marisa: 4,
+            Rumia: 8,
+            Cirno: 9,
             Meirin: 5,
-            Patchouli: 5,
-            Sakuya: 5,
-            Remilia: 5,
-            Flandre: 5
+            Patchouli: 3,
+            Sakuya: 10,
+            Remilia: 2,
+            Flandre: 0
         }
 
         this.app = new ExApp($('#app'), this.imgNames, {
@@ -33,6 +33,7 @@ class main {
         });
 
         this.app.loader.load(() => { this.set() });
+
     }
 
     set() {
@@ -53,7 +54,7 @@ class main {
         this.titleStart = new ExSprite(this.app, 'Start');
         this.titleStart.y = 96;
         this.titleStart.interactive = true;
-        this.titleStart.on('pointerdown', (e) => {
+        this.titleStart.on('pointertap', (e) => {
             this.app.tableCont.removeChild(this.titleCont);
             this.select();
         });
@@ -63,60 +64,87 @@ class main {
     }
 
     select() {
+        this.music = new Audio('./music/13_oharaibou_140.ogg');
+        this.music.loop = true;
+        this.music.play();
+        
         this.selectCont = new PIXI.Container();
         this.app.tableCont.addChild(this.selectCont);
 
-        this.chara = {
-            sprite: Array(this.charaNames.length),
-            select: Array(this.charaNames.length),
-            n: 4
-        }
+        this.chara = Array(this.charaNames.length);
+        this.charaN = 4;
+
+        this.charaNText = new PIXI.Text('キャラ数' + this.charaN + '/4', {
+            fontSize: 24,
+            fill: 0xffffff,
+            stroke: 0x777777,
+            strokeThickness: 2
+        });
+        this.charaNText.y = -136;
+        this.charaNText.anchor.x = 0.5;
+        this.selectCont.addChild(this.charaNText);
 
         let w = 3;
         for (let y = 0; y < this.charaNames.length / w; ++y) {
             for (let x = 0; x < w; ++x) {
                 let n = x + y * w;
-                if(n == this.charaNames.length) { break }
-                
-                this.chara.sprite[n] = new ExSprite(this.app, this.charaNames[n])
-                this.chara.sprite[n].x = x * 64 - (w - 1) * 32;
-                this.chara.sprite[n].y = y * 64 - 64;
-                this.chara.sprite[n].interactive = true;
-                this.chara.sprite[n].on('pointerdown',(e) => {
-                    this.chara.select[n] = !this.chara.select[n];
-                    if(this.chara.select[n]) {
-                        this.chara.sprite[n].tint = 0xffcccc;
-                        this.chara.n += 1;
+                if (n == this.charaNames.length) { break }
+
+                this.chara[n] = {};
+                this.chara[n].sprite = new ExSprite(this.app, this.charaNames[n]);
+                this.chara[n].sprite.x = x * 64 - (w - 1) * 32;
+                this.chara[n].sprite.y = y * 64 - 64;
+                this.chara[n].sprite.interactive = true;
+                this.chara[n].sprite.on('pointertap', (e) => {
+                    this.chara[n].select = !this.chara[n].select;
+                    if (this.chara[n].select) {
+                        this.chara[n].sprite.tint = 0xffcccc;
+                        this.charaN += 1;
                     } else {
-                        this.chara.sprite[n].tint = 0xffffff;
-                        this.chara.n -= 1;
+                        this.chara[n].sprite.tint = 0xffffff;
+                        this.charaN -= 1;
                     }
+                    this.charaNText.text = 'キャラ数' + this.charaN + '/4';
                 });
 
                 if (n < 4) {
-                    this.chara.select[n] = true;
-                    this.chara.sprite[n].tint = 0xffcccc;
+                    this.chara[n].select = true;
+                    this.chara[n].sprite.tint = 0xffcccc;
                 } else {
-                    this.chara.select[n] = false;
+                    this.chara[n].select = false;
                 }
 
-                this.selectCont.addChild(this.chara.sprite[n]);
+                let text = '点:P=' + this.charaScoreRatios[this.charaNames[n]] + ':' + (10 - this.charaScoreRatios[this.charaNames[n]]);
+                this.chara[n].ratioText = new PIXI.Text(text, {
+                    fontSize: 14,
+                    fill: 0xffffff,
+                    stroke: 0x000000,
+                    strokeThickness: 2
+                });
+
+                this.chara[n].ratioText.anchor.x = 0.5;
+                this.chara[n].ratioText.x = x * 64 - (w - 1) * 32;
+                this.chara[n].ratioText.y = y * 64 - 48;
+
+                this.selectCont.addChild(this.chara[n].sprite);
+                this.selectCont.addChild(this.chara[n].ratioText);
             }
         }
 
         this.selectStart = new ExSprite(this.app, 'Start');
         this.selectStart.y = 128;
+
         this.selectStart.interactive = true;
-        this.selectStart.on('pointerdown',() => {
-            if (this.chara.n == 4) {
+        this.selectStart.on('pointertap', () => {
+            if (this.charaN == 4) {
                 this.app.tableCont.removeChild(this.selectCont);
-                console.log('a');
                 this.useCharaNs = [];
-                for (let n = 0; n < this.charaNames.length; ++n){
-                    if (this.chara.select[n]) {
+                for (let n = 0; n < this.charaNames.length; ++n) {
+                    if (this.chara[n].select) {
                         this.useCharaNs.push(n);
                     }
                 }
+                this.music.pause();
                 this.game();
             }
         });
